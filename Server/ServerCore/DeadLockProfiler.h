@@ -18,17 +18,16 @@ private:
 	void Dfs(int32 index);
 
 private:
-	unordered_map<const char*, int32>	_nameToId;
-	unordered_map<int32, const char*>	_idToName;
+	unordered_map<const char*, int32>	_nameToId; // Lock ì‚¬ì „
+	unordered_map<int32, const char*>	_idToName; // Lock ì‚¬ì „
 	stack<int32>						_lockStack;
-	map<int32, set<int32>>				_lockHistory;
+	map<int32, set<int32>>				_lockHistory; // k : LockId, v : í•´ë‹¹ Lock ì´í›„ì— ìƒì„±ëœ Lock
 
 	Mutex _lock;
 
 private:
-	vector<int32>	_discoveredOrder; // ³ëµå°¡ ¹ß°ßµÈ ¼ø¼­¸¦ ±â·ÏÇÏ´Â ¹è¿­
-	int32			_discoveredCount = 0; // ³ëµå°¡ ¹ß°ßµÈ ¼ø¼­
-	vector<bool>	_finished; // Dfs(i)°¡ Á¾·á µÇ¾ú´ÂÁö ¿©ºÎ
-	vector<int32>	_parent;
+	vector<int32>	_discoveredOrder;		// i : LockId, v : í•´ë‹¹ Lockì´ ë°œê²¬ëœ ìˆœì„œ
+	int32			_discoveredCount = 0;	// ë…¸ë“œê°€ ë°œê²¬ë˜ ìˆœì„œ
+	vector<bool>	_finished; // Dfs(i)	// i : LockId, v : í•´ë‹¹ Lockì˜ Dfs ì¢…ë£Œ ì—¬ë¶€
+	vector<int32>	_parent;				// i : LockId, v : ë¶€ëª¨ Lock
 };
-

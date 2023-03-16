@@ -20,7 +20,7 @@ public:
 		{
 			delete this;
 		}
-		return refCount;
+		return refCount; // ì°¸ì¡° ìˆ˜
 	}
 
 protected:
@@ -38,18 +38,15 @@ public:
 	TSharedPtr() { }
 	TSharedPtr(T* ptr) { Set(ptr); }
 
-	// º¹»ç
 	TSharedPtr(const TSharedPtr& rhs) { Set(rhs._ptr); }
-	// ÀÌµ¿
 	TSharedPtr(TSharedPtr&& rhs) { _ptr = rhs._ptr; rhs._ptr = nullptr; }
-	// »ó¼Ó °ü°è º¹»ç
 	template<typename U>
 	TSharedPtr(const TSharedPtr<U>& rhs) { Set(static_cast<T*>(rhs._ptr)); }
 
 	~TSharedPtr() { Release(); }
 
 public:
-	// º¹»ç ¿¬»êÀÚ
+	// ë³µì‚¬ ì—°ì‚°ì
 	TSharedPtr& operator=(const TSharedPtr& rhs)
 	{
 		if (_ptr != rhs._ptr)
@@ -60,7 +57,7 @@ public:
 		return *this;
 	}
 
-	// ÀÌµ¿ ¿¬»êÀÚ
+	// ì´ë™ ì—°ì‚°ì
 	TSharedPtr& operator=(TSharedPtr&& rhs)
 	{
 		Release();

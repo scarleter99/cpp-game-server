@@ -1,7 +1,7 @@
 #pragma once
 #include "Types.h"
 
-/*----------------
+/*-----------------
     RW SpinLock
 -----------------*/
 
@@ -35,7 +35,7 @@ private:
 
 /*----------------
     LockGuards
------------------*/
+----------------*/
 
 class ReadLockGuard
 {

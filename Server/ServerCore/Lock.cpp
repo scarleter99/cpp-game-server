@@ -9,7 +9,7 @@ void Lock::WriteLock(const char* name)
 	GDeadLockProfiler->PushLock(name);
 #endif
 
-	// µ¿ÀÏÇÑ ¾²·¹µå°¡ ¼ÒÀ¯ÇÏ°í ÀÖ´Ù¸é ¹«Á¶°Ç ¼º°ø.
+	// ë™ì¼ ì“°ë ˆë“œê°€ WriteLockì„ ì†Œìœ í•˜ê³  ìˆë‹¤ë©´ Lock íšë“
 	const uint32 lockThreadId = (_lockFlag.load() & WRITE_THREAD_MASK) >> 16;
 	if (LThreadId == lockThreadId)
 	{
@@ -17,7 +17,7 @@ void Lock::WriteLock(const char* name)
 		return;
 	}
 
-	// ¾Æ¹«µµ ¼ÒÀ¯ ¹× °øÀ¯ÇÏ°í ÀÖÁö ¾ÊÀ» ¶§, °æÇÕÇØ¼­ ¼ÒÀ¯±ÇÀ» ¾ò´Â´Ù.
+	// ê²½í•©í•´ì„œ Lock íšë“ (ReadLockì„ ì†Œìœ í•˜ê³  ìˆë‹¤ë©´ CRASH)
 	const int64 beginTick = ::GetTickCount64();
 	const uint32 desired = ((LThreadId << 16) & WRITE_THREAD_MASK);
 	while (true)
@@ -45,7 +45,7 @@ void Lock::WriteUnlock(const char* name)
 	GDeadLockProfiler->PopLock(name);
 #endif
 
-	// ReadLock ´Ù Ç®±â Àü¿¡´Â WriteUnlock ºÒ°¡´É.
+	// ReadLockì„ ë‹¤ í’€ê¸° ì „ì—ëŠ” WriteUnlock ë¶ˆê°€ëŠ¥
 	if ((_lockFlag.load() & READ_COUNT_MASK) != 0)
 		CRASH("INVALID_UNLOCK_ORDER");
 
@@ -60,7 +60,7 @@ void Lock::ReadLock(const char* name)
 	GDeadLockProfiler->PushLock(name);
 #endif
 
-	// µ¿ÀÏÇÑ ¾²·¹µå°¡ ¼ÒÀ¯ÇÏ°í ÀÖ´Ù¸é ¹«Á¶°Ç ¼º°ø.
+	// ë™ì¼ ì“°ë ˆë“œê°€ WriteLockì„ ì†Œìœ í•˜ê³  ìˆë‹¤ë©´ Lock
 	const uint32 lockThreadId = (_lockFlag.load() & WRITE_THREAD_MASK) >> 16;
 	if (LThreadId == lockThreadId)
 	{
@@ -68,7 +68,7 @@ void Lock::ReadLock(const char* name)
 		return;
 	}
 
-	// ¾Æ¹«µµ ¼ÒÀ¯ÇÏ°í ÀÖÁö ¾ÊÀ» ¶§ °æÇÕÇØ¼­ °øÀ¯ Ä«¿îÆ®¸¦ ¿Ã¸°´Ù.
+	// ê²½í•©í•´ì„œ Lock íšë“
 	const int64 beginTick = ::GetTickCount64();
 	while (true)
 	{
