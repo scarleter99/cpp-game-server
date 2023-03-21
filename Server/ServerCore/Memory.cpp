@@ -64,7 +64,7 @@ void* Memory::Allocate(int32 size)
 	if (allocSize > MAX_ALLOC_SIZE)
 	{
 		// 크기가 4096을 넘어가면 일반 할당
-		header = reinterpret_cast<MemoryHeader*>(::malloc(allocSize));
+		header = reinterpret_cast<MemoryHeader*>(::_aligned_malloc(allocSize, SLIST_ALIGNMENT));
 	}
 	else
 	{
@@ -84,7 +84,7 @@ void Memory::Release(void* ptr)
 	if (allocSize > MAX_ALLOC_SIZE)
 	{
 		// 크기가 4096을 넘어가면 일반 헤제
-		::free(header);
+		::_aligned_free(header);
 	}
 	else
 	{

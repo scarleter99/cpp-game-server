@@ -5,33 +5,10 @@
 #include "Memory.h"
 #include "Allocator.h"
 
-class Player
+class Knight
 {
 public:
-	Player() {}
-	virtual ~Player() {}
-};
-
-class Knight : public Player
-{
-public:
-	Knight()
-	{
-		cout << "Knight()" << endl;
-	}
-
-	Knight(int32 hp) : _hp(hp)
-	{
-		cout << "Knight(hp)" << endl;
-	}
-
-	~Knight()
-	{
-		cout << "~Knight()" << endl;
-	}
-
-	int32 _hp = 100;
-	int32 _mp = 10;
+	int32 _hp = rand() % 1000;
 };
 
 int main()
@@ -40,13 +17,15 @@ int main()
 	{
 		GThreadManager->Launch([]()
 			{
-				while (true) {
-					Vector<Knight> v(10);
+				while (true)
+				{
+					Knight* knight = xnew<Knight>();
 
-					Map<int32, Knight> m;
-					m[100] = Knight();
+					cout << knight->_hp << endl;
 
 					this_thread::sleep_for(10ms);
+
+					xdelete(knight);
 				}
 			});
 	}
