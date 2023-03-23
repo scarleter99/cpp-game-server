@@ -24,15 +24,15 @@ public:
 	void	Release(void* ptr);
 
 private:
-	vector<MemoryPool*> _pools;
+	vector<MemoryPool*> _pools; // MemoryPool 관리
 
-	MemoryPool* _poolTable[MAX_ALLOC_SIZE + 1];
+	MemoryPool* _poolTable[MAX_ALLOC_SIZE + 1]; // 메모리 크기에따른 MemoryPool 배정
 };
 
 template<typename Type, typename... Args>
 Type* xnew(Args&&... args)
 {
-	Type* memory = static_cast<Type*>(xxalloc(sizeof(Type)));
+	Type* memory = static_cast<Type*>(PoolAllocator::Alloc(sizeof(Type)));
 	new(memory)Type(forward<Args>(args)...); // placement new
 	return memory;
 }
@@ -41,5 +41,11 @@ template<typename Type>
 void xdelete(Type* obj)
 {
 	obj->~Type();
-	xxrelease(obj);
+	PoolAllocator::Release(obj);
+}
+
+template<typename Type>
+shared_ptr<Type> MakeShared()
+{
+	return shared_ptr<Type>{ xnew<Type>(), xdelete<Type> };
 }

@@ -46,5 +46,6 @@ public:
 private:
 	SLIST_HEADER	_header; // 메모리 영역들을 보관
 	int32			_allocSize = 0; // 메모리 영역 크기
-	atomic<int32>	_allocCount = 0; // 메모리 영역 수
+	atomic<int32>	_useCount = 0; // 사용중인 메모리 영역 수
+	atomic<int32>	_reserveCount = 0; // 보관중인 메모리 영역 수
 };

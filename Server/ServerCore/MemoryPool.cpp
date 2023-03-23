@@ -24,12 +24,13 @@ void MemoryPool::Push(MemoryHeader* ptr)
 
 	::InterlockedPushEntrySList(&_header, static_cast<PSLIST_ENTRY>(ptr)); // PSLIST_ENTRY = SLIST_ENTRY*
 
-	_allocCount.fetch_sub(1);
+	_useCount.fetch_sub(1);
+	_reserveCount.fetch_add(1);
 }
 
 MemoryHeader* MemoryPool::Pop()
 {
-	MemoryHeader* memory = static_cast<MemoryHeader*>(::InterlockedPopEntrySList(&_header));
+	MemoryHeader* memory = static_cast<MemoryHeader*>(::InterlockedPopEntrySList(&_header)); // 스택에서 꺼내기
 
 	// 없으면 새로 생성
 	if (memory == nullptr)
@@ -39,9 +40,10 @@ MemoryHeader* MemoryPool::Pop()
 	else
 	{
 		ASSERT_CRASH(memory->allocSize == 0);
+		_reserveCount.fetch_sub(1);
 	}
 
-	_allocCount.fetch_add(1);
+	_useCount.fetch_add(1);
 
 	return memory;
 }
