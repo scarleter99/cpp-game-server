@@ -1,63 +1,93 @@
 #include "pch.h"
+#include <WinSock2.h>
+#include <MSWSock.h>
+#include <WS2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
 
 #include "ThreadManager.h"
-#include "RefCounting.h"
-#include "Memory.h"
-#include "Allocator.h"
-
-using TL = TypeList<class Player, class Mage, class Knight, class Archer>;
-
-class Player
-{
-	
-public:
-	Player()
-	{
-		INIT_TL(Player)
-	}
-	virtual ~Player() {}
-
-	DECLARE_TL
-};
-
-class Knight :public Player
-{
-public:
-	Knight() { INIT_TL(Knight) }
-};
-
-class Mage :public Player
-{
-public:
-	Mage() { INIT_TL(Mage) }
-};
-
-class Archer :public Player
-{
-public:
-	Archer() { INIT_TL(Archer) }
-};
 
 int main()
 {
-	Player* player1 = new Player();
-	bool canCast1 = CanCast<Knight*>(player1); // false
-	Knight* knight1 = TypeCast<Knight*>(player1);
+	// WinSock 초기화 (ws2_3.lib 초기화), 관련 정보를 wsaData에 기록 192.168.0.48
+	WSAData wsaData;
+	if (::WSAStartup(MAKEWORD(2, 2), &wsaData))
+		return 0;
 
-	shared_ptr<Knight> knight2 = MakeShared<Knight>();
-	bool canCast2 = CanCast<Knight>(knight2); // true
-	shared_ptr<Player> player2 = TypeCast<Knight>(knight2);
-
-	for (int32 i = 0; i < 5; i++)
+	// ----- 소캣 생성 -----
+	SOCKET listenSocket = ::socket(AF_INET, SOCK_STREAM, 0);
+	if (listenSocket == INVALID_SOCKET)
 	{
-		GThreadManager->Launch([]()
-			{
-				while (true)
-				{
-
-				}
-			});
+		int32 errCode = ::WSAGetLastError();
+		cout << "Socket ErrorCode : " << errCode << endl;
+		return 0;
 	}
 
-	GThreadManager->Join();
+	// ----- 주소 지정 -----
+	SOCKADDR_IN serverAddr; // IPv4
+	::memset(&serverAddr, 0, sizeof(serverAddr));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_addr.s_addr = ::htonl(INADDR_ANY); // 알아서 지정
+	serverAddr.sin_port = ::htons(7777);
+
+	// ----- BInd -----
+	if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+	{
+		int32 errCode = ::WSAGetLastError();
+		cout << "Bind ErrorCode : " << errCode << endl;
+		return 0;
+	}
+	
+	// ----- Listen -----
+	if (::listen(listenSocket, 10) == SOCKET_ERROR) // 10 : BakcLog 대기 클라이언트 한도
+	{
+		int32 errCode = ::WSAGetLastError();
+		cout << "Listen ErrorCode : " << errCode << endl;
+		return 0;
+	}
+
+	// ------ Accept -----
+	while (true)
+	{
+		SOCKADDR_IN clientAddr; // IPv4
+		::memset(&clientAddr, 0, sizeof(clientAddr));
+		int32 addrLen = sizeof(clientAddr);
+
+		SOCKET clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
+		if (clientSocket == INVALID_SOCKET)
+		{
+			int32 errCode = ::WSAGetLastError();
+			cout << "Assept ErrorCode : " << errCode << endl;
+			return 0;
+		}
+
+		char ipAddress[16];
+		::inet_ntop(AF_INET, &clientAddr.sin_addr, ipAddress, sizeof(ipAddress));
+		cout << "Client Connected! IP = " << ipAddress << endl;
+
+		while (true)
+		{
+			char recvBuffer[1000];
+
+			int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
+			if (recvLen <= 0)
+			{
+				int32 errCode = ::WSAGetLastError();
+				cout << "Recv ErrorCode : " << errCode << endl;
+				return 0;
+			}
+
+			cout << "Recv Data! Data = " << recvBuffer << endl;
+			cout << "Recv Data! Len = " << recvLen << endl;
+
+			int32 resultCode = ::send(clientSocket, recvBuffer, recvLen, 0);
+			if (resultCode == SOCKET_ERROR)
+			{
+				int32 errCode = ::WSAGetLastError();
+				cout << "Send ErrorCode : " << errCode << endl;
+				return 0;
+			}
+		}
+	}
+
+	::WSACleanup();
 }
