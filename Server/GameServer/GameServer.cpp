@@ -22,13 +22,14 @@ int main()
 		return 0;
 	}
 
-	// ----- BInd -----
+	// ----- 주소 지정 -----
 	SOCKADDR_IN serverAddr; // IPv4
 	::memset(&serverAddr, 0, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_addr.s_addr = ::htonl(INADDR_ANY); // 알아서 지정
 	serverAddr.sin_port = ::htons(7777);
 
+	// ----- BInd -----
 	if (::bind(listenSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
 	{
 		int32 errCode = ::WSAGetLastError();
@@ -63,8 +64,29 @@ int main()
 		::inet_ntop(AF_INET, &clientAddr.sin_addr, ipAddress, sizeof(ipAddress));
 		cout << "Client Connected! IP = " << ipAddress << endl;
 
-		// TODO
+		while (true)
+		{
+			char recvBuffer[1000];
 
+			int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
+			if (recvLen <= 0)
+			{
+				int32 errCode = ::WSAGetLastError();
+				cout << "Recv ErrorCode : " << errCode << endl;
+				return 0;
+			}
+
+			cout << "Recv Data! Data = " << recvBuffer << endl;
+			cout << "Recv Data! Len = " << recvLen << endl;
+
+			int32 resultCode = ::send(clientSocket, recvBuffer, recvLen, 0);
+			if (resultCode == SOCKET_ERROR)
+			{
+				int32 errCode = ::WSAGetLastError();
+				cout << "Send ErrorCode : " << errCode << endl;
+				return 0;
+			}
+		}
 	}
 
 	::WSACleanup();
