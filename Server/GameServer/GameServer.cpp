@@ -5,33 +5,48 @@
 #include "Memory.h"
 #include "Allocator.h"
 
-class Knight
+using TL = TypeList<class Player, class Mage, class Knight, class Archer>;
+
+class Player
 {
+	
 public:
-	int32 _hp = rand() % 1000;
+	Player()
+	{
+		INIT_TL(Player)
+	}
+	virtual ~Player() {}
+
+	DECLARE_TL
 };
 
-class Monster
+class Knight :public Player
 {
 public:
-	int64 _id = 0;
+	Knight() { INIT_TL(Knight) }
+};
+
+class Mage :public Player
+{
+public:
+	Mage() { INIT_TL(Mage) }
+};
+
+class Archer :public Player
+{
+public:
+	Archer() { INIT_TL(Archer) }
 };
 
 int main()
 {
-	Knight* knights[100];
+	Player* player1 = new Player();
+	bool canCast1 = CanCast<Knight*>(player1); // false
+	Knight* knight1 = TypeCast<Knight*>(player1);
 
-	for (int32 i = 0; i < 100; i++)
-		knights[i] = ObjectPool<Knight>::Pop();
-
-	for (int32 i = 0; i < 100; i++)
-	{
-		ObjectPool<Knight>::Push(knights[i]);
-		knights[i] = nullptr;
-	}
-
-	shared_ptr<Knight> sptr = ObjectPool<Knight>::MakeShared();
-	shared_ptr<Knight> sptr2 = MakeShared<Knight>();
+	shared_ptr<Knight> knight2 = MakeShared<Knight>();
+	bool canCast2 = CanCast<Knight>(knight2); // true
+	shared_ptr<Player> player2 = TypeCast<Knight>(knight2);
 
 	for (int32 i = 0; i < 5; i++)
 	{
@@ -39,13 +54,7 @@ int main()
 			{
 				while (true)
 				{
-					Knight* knight = xnew<Knight>();
 
-					cout << knight->_hp << endl;
-
-					this_thread::sleep_for(10ms);
-
-					xdelete(knight);
 				}
 			});
 	}
