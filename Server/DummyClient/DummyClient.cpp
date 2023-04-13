@@ -23,7 +23,7 @@ int main()
 	// ad : Address Family (AF_INET = IPv4, AF_INET6 = IPv6)
 	// type : TCP(SOCK_STREAM), UDP(SOCK_DGRAM)
 	// protocol : 0
-	SOCKET clientSocket = ::socket(AF_INET, SOCK_STREAM, 0);
+	SOCKET clientSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
 	if (clientSocket == INVALID_SOCKET)
 	{
 		HandleError("Socket");
