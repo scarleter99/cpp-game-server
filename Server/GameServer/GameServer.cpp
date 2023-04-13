@@ -28,51 +28,38 @@ int main()
 		return 0;
 	}
 
-	// ----- 서버 주소 지정 -----
-	SOCKADDR_IN serverAddr; // IPv4
-	::memset(&serverAddr, 0, sizeof(serverAddr));
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_addr.s_addr = ::htonl(INADDR_ANY); // 구식
-	serverAddr.sin_port = ::htons(7777);
+	// ----- setsockopt -----
+	// s: 옵션 처리자
+	// level: Socket(SOL_SOCKET), IPv4(IPPROTO_IP, TCP(IPPROTO_TCP)
+	// optName: 연결확인(SO_KEEPALIVE), 지연(SO_LINGER)
+	// *optVal:
+	bool enable = true;
+	::setsockopt(serverSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&enable, sizeof(enable));
 
-	// ----- Bind -----
-	if (::bind(serverSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
-	{
-		HandleError("Bind");
-		return 0;
-	}
+	LINGER linger;
+	linger.l_onoff = 1;
+	linger.l_linger = 5; // 지연 시간
+	::setsockopt(serverSocket, SOL_SOCKET, SO_LINGER, (char*)&linger, sizeof(linger));
 
-	// ----- Accept & Receive/Send -----
-	while (true) {
-		SOCKADDR_IN clientAddr;
-		::memset(&clientAddr, 0, sizeof(clientAddr));
-		int32 addrLen = sizeof(clientAddr);
+	// ----- getsockopt -----
+	// optName: 송신 버퍼 크기(SO_SNDBUF), 수신 버퍼 크기(SO_RCVBUF)
+	int32 sendBufferSize;
+	int32 optionLen = sizeof(sendBufferSize);
+	::getsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &optionLen);
+	cout << "송신 버퍼 크기: " << sendBufferSize << endl;
 
-		this_thread::sleep_for(1s);
+	int32 recvBufferSize;
+	int32 optionLen = sizeof(recvBufferSize);
+	::getsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&recvBufferSize, &optionLen);
+	cout << "수신 버퍼 크기: " << recvBufferSize << endl;
 
-		char recvBuffer[1000];
-
-		int32 recvLen = ::recvfrom(serverSocket, recvBuffer, sizeof(recvBuffer), 0,
-			(SOCKADDR*)&clientAddr, &addrLen);
-
-		if (recvLen <= 0)
-		{
-			HandleError("RecvFrom");
-			return 0;
-		}
-
-		cout << "Recv Data! Data = " << recvBuffer << endl;
-		cout << "Recv Data! Len = " << recvLen << endl;
+	// ----- shutdown(Half-Close) -----
+	// how: send 통제(SD_SEND), recv 통제(SD_RECEIVE), 둘 다 통제(SD_BOTH)
+	::shutdown(serverSocket, SD_SEND);
 
 
-		int32 resultCode = ::sendto(serverSocket, recvBuffer, recvLen, 0,
-			(SOCKADDR*)&clientAddr, sizeof(clientAddr));
-		if (resultCode == SOCKET_ERROR)
-		{
-			HandleError("SendTo");
-			return 0;
-		}
-	}
+
+	::closesocket(serverSocket);
 
 	::WSACleanup();
 }
