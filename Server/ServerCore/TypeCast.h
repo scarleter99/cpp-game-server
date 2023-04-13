@@ -2,7 +2,7 @@
 #include "Types.h"
 
 #pragma region TypeList 
-// 판단할 type들 저장
+// TypeCasting 가능 여부를 판단할 type들 저장
 template<typename... T>
 struct TypeList;
 
@@ -20,11 +20,9 @@ struct TypeList<T, U...>
 	using Head = T;
 	using Tail = TypeList<U...>;
 };
-
 #pragma endregion
 
 #pragma region Length
-
 template<typename T>
 struct Length;
 
@@ -54,17 +52,14 @@ struct TypeAt<TypeList<Head, Tail...>, 0>
 	using Result = Head;
 };
 
-// 재귀적으로 위치 탐색
 template<typename Head, typename... Tail, int32 index>
 struct TypeAt<TypeList<Head, Tail...>, index>
 {
 	using Result = typename TypeAt<TypeList<Tail...>, index - 1>::Result;
 };
-
 #pragma endregion
 
-#pragma region IndexOf
-
+#pragma  region IndexOf
 template<typename TL, typename T>
 struct IndexOf;
 
@@ -89,11 +84,9 @@ private:
 public:
 	enum { value = (temp == -1) ? -1 : temp + 1 };
 };
-
 #pragma endregion
 
 #pragma region Conversion
-
 template<typename From, typename To>
 class Conversion
 {
@@ -118,7 +111,7 @@ public:
 #pragma region TypeCast
 
 template<int32 v>
-struct Int2Type 
+struct Int2Type
 {
 	enum { value = v };
 };
@@ -157,7 +150,7 @@ public:
 		MakeTable(Int2Type<i + 1>(), Int2Type<0>());
 	}
 
-	template<int32 j>
+	template<int j>
 	static void MakeTable(Int2Type<length>, Int2Type<j>)
 	{
 	}
@@ -188,6 +181,7 @@ To TypeCast(From* ptr)
 
 	return nullptr;
 }
+
 
 template<typename To, typename From>
 shared_ptr<To> TypeCast(shared_ptr<From> ptr)

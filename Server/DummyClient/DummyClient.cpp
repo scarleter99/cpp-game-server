@@ -41,6 +41,8 @@ int main()
 	//::connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)); // TCP처럼 Connect 가능
 
 	// ----- Connect & Receive/Send -----
+	this_thread::sleep_for(1s);
+
 	while (true)
 	{
 		char sendBuffer[100] = "Hello World!";

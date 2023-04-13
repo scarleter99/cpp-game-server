@@ -48,6 +48,8 @@ int main()
 		::memset(&clientAddr, 0, sizeof(clientAddr));
 		int32 addrLen = sizeof(clientAddr);
 
+		this_thread::sleep_for(1s);
+
 		char recvBuffer[1000];
 
 		int32 recvLen = ::recvfrom(serverSocket, recvBuffer, sizeof(recvBuffer), 0,
