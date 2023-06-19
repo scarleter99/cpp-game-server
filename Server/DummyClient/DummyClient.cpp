@@ -14,8 +14,6 @@ void HandleError(const char* cause)
 
 int main()
 {
-	this_thread::sleep_for(1s);
-
 	// WinSock 초기화 (ws2_3.lib 초기화), 관련 정보를 wsaData에 기록 192.168.0.48
 	WSAData wsaData;
 	if (::WSAStartup(MAKEWORD(2, 2), &wsaData))
@@ -54,40 +52,34 @@ int main()
 	cout << "Connect!" << endl;
 
 	char sendBuffer[100] = "Hello World!";
+	WSAEVENT wsaEvent = ::WSACreateEvent();
+	WSAOVERLAPPED overlapped = {};
+	overlapped.hEvent = wsaEvent;
 
 	// ----- Send -----
 	while (true)
 	{
-		if (::send(clientSocket, sendBuffer, sizeof(sendBuffer), 0) == SOCKET_ERROR)
-		{
-			if (::WSAGetLastError() == WSAEWOULDBLOCK)
-				continue;
+		WSABUF wsaBuf;
+		wsaBuf.buf = sendBuffer;
+		wsaBuf.len = 100;
 
-			break;
+		DWORD sendLen = 0;
+		DWORD flags = 0;
+		if (::WSASend(clientSocket, &wsaBuf, 1, &sendLen, flags, &overlapped, nullptr) == SOCKET_ERROR)
+		{
+			if (::WSAGetLastError() == WSA_IO_PENDING)
+			{
+				::WSAWaitForMultipleEvents(1, &wsaEvent, TRUE, WSA_INFINITE, FALSE);
+				::WSAGetOverlappedResult(clientSocket, &overlapped, &sendLen, FALSE, &flags);
+			}
+			else
+			{
+				// TODO : 에러
+				break;
+			}
 		}
 
 		cout << "Send Data! Len = " << sizeof(sendBuffer) << endl;
-
-		// ----- Recv -----
-		while (true)
-		{
-			char recvBuffer[1000];
-			int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
-			if (recvLen == SOCKET_ERROR)
-			{
-				if (::WSAGetLastError() == WSAEWOULDBLOCK)
-					continue;
-
-				break;
-			}
-			else if (recvLen == 0)
-			{
-				break; // 연결 끊김
-			}
-
-			cout << "Recv Data! Len = " << recvLen << endl;
-			break;
-		}
 
 		this_thread::sleep_for(1s);
 	}

@@ -1,4 +1,7 @@
 #include "pch.h"
+#include "ThreadManager.h"
+#include "Memory.h"
+
 #include <WinSock2.h>
 #include <MSWSock.h>
 #include <WS2tcpip.h>
@@ -18,8 +21,52 @@ struct Session
 	char recvBuffer[BUFSIZE] = {};
 	int32 recvBytes = 0;
 	int32 sendBytes = 0;
-	WSAOVERLAPPED overlapped = {};
 };
+
+enum IO_TYPE 
+{
+	READ,
+	WRITE,
+	ACCEPT,
+	CONNECT,
+};
+
+struct OverlappedEx
+{
+	WSAOVERLAPPED overlapped = {};
+	int32 type = 0; // IO_TYPE
+};
+
+void WorkerThreadMain(HANDLE iocpHandle)
+{
+	while (true)
+	{
+		DWORD bytesTransferred = 0;
+		Session* session = nullptr;
+		OverlappedEx* overlappedEx = nullptr;
+
+		BOOL ret = ::GetQueuedCompletionStatus(iocpHandle, &bytesTransferred,
+			(ULONG_PTR*)&session, (LPOVERLAPPED*)&overlappedEx, INFINITE);
+
+		if (ret == FALSE || bytesTransferred == 0)
+		{
+			// TODO : 연결 끊김
+			continue;
+		}
+
+		ASSERT_CRASH(overlappedEx->type == IO_TYPE::READ);
+
+		cout << "Recv Data IOCP = " << bytesTransferred << endl;
+
+		WSABUF wsaBuf;
+		wsaBuf.buf = session->recvBuffer;
+		wsaBuf.len = BUFSIZE;
+
+		DWORD recvLen = 0;
+		DWORD flags = 0;
+		::WSARecv(session->socket, &wsaBuf, 1, &recvLen, &flags, &overlappedEx->overlapped, NULL);
+	}
+}
 
 int main()
 {
@@ -53,76 +100,48 @@ int main()
 
 	cout << "Listen!" << endl;
 
-	
-	//::WSASend();
+	vector<Session*> sessionManager;
 
-	// s: 비동기 소켓
-	// lpOverlapped: 구조체 주소값
-	// lpcbTransfer: 전송된 바이트 수
-	// fWait: 작업이 끝날때까지 대기하는지 여부 (false)
-	// lpdwFlags: 0
-	//::WSAGetOverlappedResult();
+	// Completion Port 생성
+	HANDLE iocpHandle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+
+	for (int32 i = 0; i < 5; i++)
+		GThreadManager->Launch([=]() { WorkerThreadMain(iocpHandle); });
 
 	while (true)
 	{
 		SOCKADDR_IN clientAddr;
 		int32 addrLen = sizeof(clientAddr);
 
-		SOCKET clientSocket;
-		while (true)
-		{
-			clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
-			if (clientSocket != INVALID_SOCKET)
-				break;
+		SOCKET clientSocket = ::accept(listenSocket, (SOCKADDR*)&clientAddr, &addrLen);
+		if (clientSocket == INVALID_SOCKET)
+			return 0;
 
-			if (::WSAGetLastError() == WSAEWOULDBLOCK)
-				continue;
+		Session* session = xnew<Session>();
+		session->socket = clientSocket;
+		sessionManager.push_back(session);
 
-			return 0; // 에러
-		}
+		// 소켓을 Completion Port에 등록
+		::CreateIoCompletionPort((HANDLE)clientSocket, iocpHandle, /*Key*/(ULONG_PTR)session, 0);
 
-		
-		Session session = Session{ clientSocket };
+		WSABUF wsaBuf;
+		wsaBuf.buf = session->recvBuffer;
+		wsaBuf.len = BUFSIZE;
 
-		WSAEVENT clientEvent = ::WSACreateEvent();
-		session.overlapped.hEvent = clientEvent;
+		OverlappedEx* overlappedEx = new OverlappedEx();
+		overlappedEx->type = IO_TYPE::READ;
 
-		while (true)
-		{
-			WSABUF wsaBuf;
-			wsaBuf.buf = session.recvBuffer;
-			wsaBuf.len = BUFSIZE;
+		DWORD recvLen = 0;
+		DWORD flags = 0;
+		::WSARecv(clientSocket, &wsaBuf, 1, &recvLen, &flags, &overlappedEx->overlapped, NULL);
 
-			DWORD recvLen = 0;
-			DWORD flags = 0;
-
-			// s: 비동기 소켓
-			// IpBuffers: WSABUF 배열의 시작 주소 // Scatter-Gather
-			// dwBufferCount: WSABUF 배열 수
-			// lpNumberOfBytesRecvd: 받은 데이터 바이트 수
-			// dwFlags: 0
-			// lpOverlapped: WSAOVERLAPPED 구조체 주소값
-			// lpCompletionRoutine: 콜백 함수
-			if (::WSARecv(clientSocket, &wsaBuf, 1, &recvLen, &flags, &session.overlapped, nullptr) == SOCKET_ERROR)
-			{
-				if (::WSAGetLastError() == WSA_IO_PENDING)
-				{
-					::WSAWaitForMultipleEvents(1, &clientEvent, TRUE, WSA_INFINITE, FALSE);
-					::WSAGetOverlappedResult(session.socket, &session.overlapped, &recvLen, FALSE, &flags);
-				}
-				else
-				{
-					// TODO : 에러
-					break;
-				}
-			}
-
-			cout << "Data Recv Len =" << recvLen << endl;
-		}
-
-		::closesocket(session.socket);
-		::WSACloseEvent(clientEvent);
+		// 유저가 게임 접속 종료하는 예시 코드
+		Session* s = sessionManager.back();
+		sessionManager.pop_back();
+		xdelete(s);
 	}
+		
+	GThreadManager->Join();
 
 	::WSACleanup();
 }
