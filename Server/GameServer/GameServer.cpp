@@ -80,10 +80,6 @@ int main()
 	if (listenSocket == INVALID_SOCKET)
 		return 0;
 
-	u_long on = 1;
-	if (::ioctlsocket(listenSocket, FIONBIO, &on) == INVALID_SOCKET) // 논블로킹 소켓 설정
-		return 0;
-
 	SOCKADDR_IN serverAddr;
 	::memset(&serverAddr, 0, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
@@ -136,9 +132,9 @@ int main()
 		::WSARecv(clientSocket, &wsaBuf, 1, &recvLen, &flags, &overlappedEx->overlapped, NULL);
 
 		// 유저가 게임 접속 종료하는 예시 코드
-		Session* s = sessionManager.back();
-		sessionManager.pop_back();
-		xdelete(s);
+		//Session* s = sessionManager.back();
+		//sessionManager.pop_back();
+		//xdelete(s);
 	}
 		
 	GThreadManager->Join();

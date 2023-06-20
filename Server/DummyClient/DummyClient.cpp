@@ -14,6 +14,8 @@ void HandleError(const char* cause)
 
 int main()
 {
+	this_thread::sleep_for(1s);
+
 	// WinSock 초기화 (ws2_3.lib 초기화), 관련 정보를 wsaData에 기록 192.168.0.48
 	WSAData wsaData;
 	if (::WSAStartup(MAKEWORD(2, 2), &wsaData))
