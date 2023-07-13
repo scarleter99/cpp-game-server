@@ -21,4 +21,3 @@ public:
 private:
 	SOCKADDR_IN		_sockAddr = {};
 };
-
