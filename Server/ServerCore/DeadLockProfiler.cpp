@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "DeadLockProfiler.h"
 
 /*--------------------
@@ -25,10 +25,10 @@ void DeadLockProfiler::PushLock(const char* name)
 	}
 
 	// 현재 쓰레드가 획득한 락이 있는지 확인
-	if (_lockStack.empty() == false)
+	if (LLockStack.empty() == false)
 	{
 		// 부모 락과 다른 락인지 확인 
-		const int32 prevId = _lockStack.top();
+		const int32 prevId = LLockStack.top();
 		if (lockId != prevId)
 		{
 			// 처음 발견된 락인지 확인 
@@ -42,21 +42,21 @@ void DeadLockProfiler::PushLock(const char* name)
 		}
 	}
 
-	_lockStack.push(lockId);
+	LLockStack.push(lockId);
 }
 
 void DeadLockProfiler::PopLock(const char* name)
 {
 	LockGuard guard(_lock);
 
-	if (_lockStack.empty())
+	if (LLockStack.empty())
 		CRASH("MULTIPLE_UNLOCK");
 
 	int32 lockId = _nameToId[name];
-	if (_lockStack.top() != lockId)
+	if (LLockStack.top() != lockId)
 		CRASH("INVALID_UNLOCK");
 
-	_lockStack.pop();
+	LLockStack.pop();
 }
 
 void DeadLockProfiler::CheckCycle()

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <stack>
 #include <map>
 #include <vector>
@@ -20,7 +20,6 @@ private:
 private:
 	unordered_map<const char*, int32>	_nameToId; // Lock 사전
 	unordered_map<int32, const char*>	_idToName; // Lock 사전
-	stack<int32>						_lockStack;
 	map<int32, set<int32>>				_lockHistory; // k : LockId, v : 해당 Lock 이후에 생성된 Lock
 
 	Mutex _lock;
