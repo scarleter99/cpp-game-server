@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lock.h"
 #include "CoreTLS.h"
 #include "DeadLockProfiler.h"
