@@ -11,11 +11,11 @@ public:
 	static Type* Pop(Args&&... args)
 	{
 #ifdef _STOMP
-		MemoryHeader* ptr = reinterpret_cast<MemoryHeader>(StompAllocator::Alloc(s_allocSize));
+		MemoryHeader* ptr = reinterpret_cast<MemoryHeader*>(StompAllocator::Alloc(s_allocSize));
 		Type* memory = static_cast<Type*>(MemoryHeader::AttachHeader(ptr, s_allocSize));
 #else
 		Type* memory = static_cast<Type*>(MemoryHeader::AttachHeader(s_pool.Pop(), s_allocSize));
-#endif
+#endif		
 		new(memory)Type(forward<Args>(args)...); // placement new
 		return memory;
 	}
@@ -29,7 +29,7 @@ public:
 		s_pool.Push(MemoryHeader::DetachHeader(obj));
 #endif
 	}
-	
+
 	template<typename... Args>
 	static shared_ptr<Type> MakeShared(Args&&... args)
 	{
@@ -38,8 +38,8 @@ public:
 	}
 
 private:
-	static int32 s_allocSize; // 메모리 영역 크기
-	static MemoryPool s_pool;
+	static int32		s_allocSize;
+	static MemoryPool	s_pool;
 };
 
 template<typename Type>

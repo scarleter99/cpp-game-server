@@ -12,14 +12,14 @@ public:
 	SendBuffer(SendBufferChunkRef owner, BYTE* buffer, int32 allocSize);
 	~SendBuffer();
 
-	BYTE* Buffer() { return _buffer; }
+	BYTE*		Buffer() { return _buffer; }
 	int32		WriteSize() { return _writeSize; }
 	void		Close(uint32 writeSize);
 
 private:
 	BYTE*				_buffer;
-	uint32				_allocSize = 0;
-	uint32				_writeSize = 0;
+	uint32				_allocSize = 0; // 버퍼 총 크기
+	uint32				_writeSize = 0; // 사용중인 버퍼 크기
 	SendBufferChunkRef	_owner;
 };
 
