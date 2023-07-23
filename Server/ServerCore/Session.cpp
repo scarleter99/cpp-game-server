@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "Session.h"
 #include "SocketUtils.h"
 #include "Service.h"
@@ -91,7 +91,7 @@ bool Session::RegisterConnect()
 	if (SocketUtils::SetReuseAddress(_socket, true) == false)
 		return false;
 
-	if (SocketUtils::BindAnyAddress(_socket, 0/*남는거*/) == false)
+	if (SocketUtils::BindAnyAddress(_socket, 0/*남는거 */) == false)
 		return false;
 
 	_connectEvent.Init();

@@ -4,6 +4,8 @@
 #include "Session.h"
 #include "GameSession.h"
 #include "GameSessionManager.h"
+#include "BufferWriter.h"
+#include "ServerPacketHandler.h"
 
 int main()
 {
@@ -22,22 +24,16 @@ int main()
 				while (true)
 				{
 					service->GetIocpCore()->Dispatch();
-				}				
+				}
 			});
-	}	
+	}
 
 	char sendData[1000] = "Hello World";
 
 	while (true)
 	{
-		SendBufferRef sendBuffer = GSendBufferManager->Open(4096);
-
-		BYTE* buffer = sendBuffer->Buffer();
-		((PacketHeader*)buffer)->size = (sizeof(sendData) + sizeof(PacketHeader));
-		((PacketHeader*)buffer)->id = 1; // 1 : Hello Msg
-		::memcpy(&buffer[4], sendData, sizeof(sendData));
-		sendBuffer->Close((sizeof(sendData) + sizeof(PacketHeader)));
-
+		vector<BuffData> buffs{ BuffData {100, 1.5f}, BuffData{ 200, 2.3f }, BuffData{ 300, 0.7f } };
+		SendBufferRef sendBuffer = ServerPacketHandler::Make_S_TEST(1001, 100, 10, buffs);
 		GSessionManager.Broadcast(sendBuffer);
 
 		this_thread::sleep_for(250ms);
