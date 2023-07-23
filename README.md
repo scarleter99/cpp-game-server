@@ -1,1 +1,1 @@
-# game-server-study
+# cpp-game-server
