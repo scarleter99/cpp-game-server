@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ClientPacketHandler.h"
 #include "BufferReader.h"
+#include "Protocol.pb.h"
 
 void ClientPacketHandler::HandlePacket(BYTE* buffer, int32 len)
 {
@@ -17,67 +18,25 @@ void ClientPacketHandler::HandlePacket(BYTE* buffer, int32 len)
 	}
 }
 
-#pragma pack(1)
-
-// [ PKT_S_TEST ][BuffsListItem BuffsListItem BuffsListItem]
-struct PKT_S_TEST
-{
-	struct BuffsListItem
-	{
-		uint64 buffId;
-		float remainTime;
-	};
-
-	uint16 packetSize; // 공용 헤더
-	uint16 packetId; // 공용 헤더
-	uint64 id; // 8
-	uint32 hp; // 4
-	uint16 attack; // 2
-	uint16 buffsOffset; // 가변 데이터 시작 위치
-	uint16 buffsCount; // 가변 데이터 크기
-
-	bool Validate()
-	{
-		uint32 size = 0;
-		size += sizeof(PKT_S_TEST);
-		size += buffsCount * sizeof(BuffsListItem);
-		if (size != packetSize)
-			return false;
-
-		if (buffsOffset + buffsCount * sizeof(BuffsListItem) > packetSize)
-			return false;
-
-		return true;
-	}
-	//vector<BuffData> buffs;
-	//wstring name;
-};
-#pragma pack()
-
 void ClientPacketHandler::Handle_S_TEST(BYTE* buffer, int32 len)
 {
-	BufferReader br(buffer, len);
+	Protocol::S_TEST pkt;
 
-	if (len < sizeof(PKT_S_TEST))
-		return;
+	ASSERT_CRASH(pkt.ParseFromArray(buffer + sizeof(PacketHeader), len - sizeof(PacketHeader)));
 
-	PKT_S_TEST pkt;
-	br >> pkt;
+	cout << pkt.id() << " " << pkt.hp() << " " << pkt.attack() << endl;
 
-	if (pkt.Validate() == false)
-		return;
+	cout << "BUFSIZE : " << pkt.buffs_size() << endl;
 
-	//cout << "ID: " << id << " HP : " << hp << " ATT : " << attack << endl;
-
-	vector<PKT_S_TEST::BuffsListItem> buffs;
-
-	buffs.resize(pkt.buffsCount);
-	for (int32 i = 0; i < pkt.buffsCount; i++)
-		br >> buffs[i];
-
-	cout << "BufCount : " << pkt.buffsCount << endl;
-	for (int32 i = 0; i < pkt.buffsCount; i++)
+	for (auto& buf : pkt.buffs())
 	{
-		cout << "BufInfo : " << buffs[i].buffId << " " << buffs[i].remainTime << endl;
+		cout << "BUFINFO : " << buf.buffid() << " " << buf.remaintime() << endl;
+		cout << "VICTIMS : " << buf.victims_size() << endl;
+		for (auto& vic : buf.victims())
+		{
+			cout << vic << " ";
+		}
+
+		cout << endl;
 	}
 }
