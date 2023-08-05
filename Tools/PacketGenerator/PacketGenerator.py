@@ -5,6 +5,7 @@ import ProtoParser
 def main():
 
 	arg_parser = argparse.ArgumentParser(description = 'PacketGenerator')
+	#arg_parser.add_argument('--path', type=str, default='C:/Users/ddino/OneDrive/문서/WorkSpace/VisualStudioProjects/game-server-study/Common/Protobuf/bin/Protocol.proto', help='proto path')
 	arg_parser.add_argument('--path', type=str, default='C:/Users/ddino/OneDrive/문서/WorkSpace/VisualStudioProjects/game-server-study/Common/Protobuf/bin/Protocol.proto', help='proto path')
 	arg_parser.add_argument('--output', type=str, default='TestPacketHandler', help='output file')
 	arg_parser.add_argument('--recv', type=str, default='C_', help='recv convention')
@@ -19,7 +20,7 @@ def main():
 	template = env.get_template('PacketHandler.h')
 	output = template.render(parser=parser, output=args.output)
 
-	f = open(args.output+'.h', 'w+')
+	f = open(args.output+'.h', 'w+', encoding='utf-8')
 	f.write(output)
 	f.close()
 
