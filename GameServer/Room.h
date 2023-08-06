@@ -1,22 +1,24 @@
-#pragma once
+ï»¿#pragma once
 #include "Job.h"
 
 class Room
 {
-	friend class EnterJob;
-	friend class LeaveJob;
-	friend class BroadcastJob;
-
-private:
-	// ½Ì±Û¾²·¹µå È¯°æÀÎ¸¶³É ÄÚµù
+public:
+	// ì‹±ê¸€ì“°ë ˆë“œ í™˜ê²½ì¸ë§ˆëƒ¥ ì½”ë”©
 	void Enter(PlayerRef player);
 	void Leave(PlayerRef player);
 	void Broadcast(SendBufferRef sendBuffer);
 
 public:
-	// ¸ÖÆ¼¾²·¹µå È¯°æ¿¡¼­´Â ÀÏ°¨À¸·Î Á¢±Ù
-	void PushJob(JobRef job) { _jobs.Push(job); }
+	// ë©€í‹°ì“°ë ˆë“œ í™˜ê²½ì—ì„œëŠ” ì¼ê°ìœ¼ë¡œ ì ‘ê·¼
 	void FlushJob();
+
+	template<typename T, typename Ret, typename... Args>
+	void PushJob(Ret(T::* memFunc)(Args...), Args... args)
+	{
+		auto job = MakeShared<MemberJob<T, Ret, Args...>>(static_cast<T*>(this), memFunc, args...);
+		_jobs.Push(job);
+	}
 
 private:
 	map<uint64, PlayerRef> _players;
@@ -25,55 +27,3 @@ private:
 };
 
 extern Room GRoom;
-
-// Room Jobs
-class EnterJob : public IJob
-{
-public:
-	EnterJob(Room& room, PlayerRef player) : _room(room), _player(player)
-	{
-	}
-
-	virtual void Execute() override
-	{
-		_room.Enter(_player);
-	}
-
-public:
-	Room& _room;
-	PlayerRef _player;
-};
-
-class LeaveJob : public IJob
-{
-public:
-	LeaveJob(Room& room, PlayerRef player) : _room(room), _player(player)
-	{
-	}
-
-	virtual void Execute() override
-	{
-		_room.Leave(_player);
-	}
-
-public:
-	Room& _room;
-	PlayerRef _player;
-};
-
-class BroadcastJob : public IJob
-{
-public:
-	BroadcastJob(Room& room, SendBufferRef sendBuffer) : _room(room), _sendBuffer(sendBuffer)
-	{
-	}
-
-	virtual void Execute() override
-	{
-		_room.Broadcast(_sendBuffer);
-	}
-
-public:
-	Room& _room;
-	SendBufferRef _sendBuffer;
-};
